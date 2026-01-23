@@ -1,0 +1,433 @@
+xml
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mortgage Note Pricing Matrix - Deed Street Capital</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;
+  background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);
+  padding:20px; min-height:100vh;
+}
+.container {
+  max-width:1000px; margin:0 auto; background:white;
+  border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.1); overflow:hidden;
+}
+.header {
+  background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%);
+  color:white; padding:30px 40px; text-align:center;
+}
+.header h1 { font-size:28px; margin-bottom:8px; font-weight:700; }
+.header p { font-size:14px; opacity:0.95; font-weight:300; }
+.content { padding:40px; }
+.section { margin-bottom:40px; }
+.section-title {
+  background:#e8eef7; color:#1e3c72; padding:14px 18px; font-size:15px;
+  font-weight:700; border-left:4px solid #2a5298; margin-bottom:20px; border-radius:4px;
+}
+.form-group, .output-group {
+  margin-bottom:18px; display:grid; grid-template-columns:1fr 1fr; gap:30px; align-items:center;
+}
+.form-group label, .output-group label { font-size:14px; font-weight:500; color:#333; }
+.form-group input, .form-group select {
+  padding:10px 12px; border:2px solid #d0d8e8; border-radius:6px;
+  font-size:14px; background-color:#e8f4ff; font-weight:600; transition:all 0.2s;
+}
+.form-group input:focus, .form-group select:focus {
+  outline:none; border-color:#2a5298; box-shadow:0 0 0 3px rgba(42,82,152,0.1);
+}
+.output-value {
+  padding:10px 12px; border:2px solid #e0e0e0; border-radius:6px;
+  font-size:14px; font-weight:600; background-color:#f5f5f5; color:#1e3c72;
+}
+.adjustment-table {
+  width:100%; border-collapse:collapse; margin-bottom:20px; font-size:13px;
+}
+.adjustment-table th {
+  background-color:#2a5298; color:white; padding:12px; text-align:left; font-weight:600; border:none;
+}
+.adjustment-table td {
+  padding:10px 12px; border-bottom:1px solid #e0e0e0;
+}
+.adjustment-table tr:hover { background-color:#f9f9f9; }
+.adjustment-table .label-col { width:35%; color:#333; font-weight:500; }
+.adjustment-table .value-col { width:25%; text-align:right; color:#666; }
+.adjustment-table .result-col { width:40%; text-align:right; color:#1e3c72; font-weight:600; }
+
+.summary-box {
+  background:linear-gradient(135deg,#f0f4ff 0%,#e8f0ff 100%);
+  border:2px solid #2a5298; border-radius:8px; padding:20px; margin-top:30px;
+}
+.summary-row {
+  display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-bottom:15px; align-items:center;
+}
+.summary-row:last-child { margin-bottom:0; }
+.summary-label { font-size:14px; font-weight:600; color:#1e3c72; }
+.summary-value { font-size:18px; font-weight:700; color:#2a5298; text-align:right; }
+
+.override-alert {
+  background-color:#d4edda; border:2px solid #28a745; border-radius:6px;
+  padding:15px; margin-bottom:20px; color:#155724; font-weight:500; text-align:center;
+}
+.normal-alert {
+  background-color:#fff3cd; border:2px solid #ffc107; border-radius:6px;
+  padding:15px; margin-bottom:20px; color:#856404; font-weight:500; text-align:center;
+}
+
+.final-offer {
+  background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%);
+  color:white; border-radius:8px; padding:30px; margin-top:30px; text-align:center;
+}
+.final-offer h3 { font-size:16px; margin-bottom:15px; opacity:0.95; font-weight:500; }
+.final-offer-value { font-size:32px; font-weight:700; margin-bottom:5px; }
+
+.base-rate-display {
+  background:#f9f9f9; padding:12px; border-radius:6px; margin-bottom:20px;
+  display:grid; grid-template-columns:1fr 1fr; gap:30px;
+}
+.base-rate-label { font-size:13px; color:#666; font-weight:500; }
+.base-rate-value input {
+  width:100%; border:none; background:transparent; font-size:18px;
+  color:#1e3c72; font-weight:700; text-align:right;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Mortgage Note Pricing Matrix</h1>
+    <p>SFR Owner-Occupied | Deed Street Capital</p>
+  </div>
+  <div class="content">
+
+    <!-- Editable base rate + min discount -->
+    <div class="base-rate-display">
+      <div>
+        <div class="base-rate-label">Base Required Yield (as %)</div>
+        <div class="base-rate-value">
+          <input id="baseYieldInput" type="number" step="0.01" value="8.00">
+        </div>
+      </div>
+      <div>
+        <div class="base-rate-label">Minimum Discount to UPB ($)</div>
+        <div class="base-rate-value">
+          <input id="minDiscountInput" type="number" step="1000" value="20000">
+        </div>
+      </div>
+    </div>
+
+    <!-- INPUTS -->
+    <div class="section">
+      <div class="section-title">Input Section - Enter Your Deal Data</div>
+
+      <div class="form-group">
+        <label>1. Payor FICO Score</label>
+        <input type="number" id="fico" value="650" min="0" max="850">
+      </div>
+
+      <div class="form-group">
+        <label>2. Down Payment (% of original purchase price)</label>
+        <input type="number" id="downPayment" value="15" min="0" max="100" step="0.1">
+      </div>
+
+      <div class="form-group">
+        <label>3. Current LTV (%)</label>
+        <input type="number" id="ltv" value="80" min="0" max="100" step="0.1">
+      </div>
+
+      <div class="form-group">
+        <label>4. Seasoning (Months of Payment History)</label>
+        <input type="number" id="seasoning" value="10" min="0" max="360" step="1">
+      </div>
+
+      <div class="form-group">
+        <label>4b. Any 30+ Day Lates in Last 12 Months?</label>
+        <select id="lates">
+          <option value="N" selected>No</option>
+          <option value="Y">Yes</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>5. Property Market Tier (1-4)</label>
+        <select id="market">
+          <option value="1">Tier 1 - Strong, liquid metro/suburb</option>
+          <option value="2">Tier 2 - Average market, stable</option>
+          <option value="3" selected>Tier 3 - Weak, rural, declining</option>
+          <option value="4">Tier 4 - Very weak, distressed</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>6. Remaining Term (Months to Maturity)</label>
+        <input type="number" id="termMonths" value="216" min="0" max="480" step="1">
+      </div>
+
+      <div class="form-group">
+        <label>Unpaid Balance (UPB)</label>
+        <input type="number" id="upb" value="250000" min="0" step="1000">
+      </div>
+
+      <div class="form-group">
+        <label>Your Offer Price</label>
+        <input type="number" id="offer" value="217500" min="0" step="1000">
+      </div>
+    </div>
+
+    <!-- RISK ADJUSTMENTS DISPLAY -->
+    <div class="section">
+      <div class="section-title">Risk Factor Adjustments (basis points)</div>
+      <table class="adjustment-table">
+        <thead>
+          <tr>
+            <th>Risk Factor</th>
+            <th>Your Input</th>
+            <th>Bps Adjustment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="label-col">FICO Score</td>
+            <td class="value-col"><span id="ficoDisplay">650</span></td>
+            <td class="result-col"><span id="ficoBps">75</span> bps</td>
+          </tr>
+          <tr>
+            <td class="label-col">Down Payment %</td>
+            <td class="value-col"><span id="dpDisplay">15</span>%</td>
+            <td class="result-col"><span id="dpBps">75</span> bps</td>
+          </tr>
+          <tr>
+            <td class="label-col">Current LTV %</td>
+            <td class="value-col"><span id="ltvDisplay">80</span>%</td>
+            <td class="result-col"><span id="ltvBps">100</span> bps</td>
+          </tr>
+          <tr>
+            <td class="label-col">Seasoning</td>
+            <td class="value-col"><span id="seasoningDisplay">10 months</span></td>
+            <td class="result-col"><span id="seasoningBps">50</span> bps</td>
+          </tr>
+          <tr>
+            <td class="label-col">Market Tier</td>
+            <td class="value-col"><span id="marketDisplay">3</span></td>
+            <td class="result-col"><span id="marketBps">75</span> bps</td>
+          </tr>
+          <tr>
+            <td class="label-col">Remaining Term</td>
+            <td class="value-col"><span id="termDisplay">216 months</span></td>
+            <td class="result-col"><span id="termBps">-25</span> bps</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- OVERRIDE CHECK -->
+    <div class="section">
+      <div class="section-title">$80,000 Override Condition Check</div>
+      <div id="overrideStatus"></div>
+    </div>
+
+    <!-- YIELD CALCULATION -->
+    <div class="section">
+      <div class="section-title">Yield Calculation</div>
+      <div class="output-group">
+        <label>Total BPS Adjustment:</label>
+        <div class="output-value"><span id="totalBps">350</span> bps</div>
+      </div>
+      <div class="output-group">
+        <label>Total Adjustment as %:</label>
+        <div class="output-value"><span id="totalBpsPercent">3.50</span>%</div>
+      </div>
+      <div class="output-group">
+        <label>Override Active?</label>
+        <div class="output-value"><span id="overrideActive">NO</span></div>
+      </div>
+      <div class="output-group">
+        <label>Final Adjustment Applied:</label>
+        <div class="output-value"><span id="finalAdjBps">350</span> bps (<span id="finalAdjPercent">3.50</span>%)</div>
+      </div>
+    </div>
+
+    <!-- FINAL REQUIRED YIELD & DISCOUNT CHECK -->
+    <div class="section">
+      <div class="summary-box">
+        <div class="summary-row">
+          <div class="summary-label">Total Required Yield</div>
+          <div class="summary-value"><span id="requiredYield">11.50</span>%</div>
+        </div>
+        <div class="summary-row">
+          <div class="summary-label">Discount vs UPB</div>
+          <div class="summary-value">$<span id="discountAmount">32500</span></div>
+        </div>
+        <div class="summary-row">
+          <div class="summary-label">Meets Minimum Discount?</div>
+          <div class="summary-value" id="meetsMin">YES</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINAL OFFER -->
+    <div class="final-offer">
+      <h3>FINAL OFFER PRICE (Based on Your Inputs)</h3>
+      <div class="final-offer-value">$<span id="finalPrice">217500</span></div>
+      <p style="margin-top:15px; opacity:0.95;">
+        Discount: $<span id="finalDiscount">32500</span> |
+        Required Yield: <span id="finalYield">11.50</span>%
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+const riskBands = {
+  fico: [
+    {min:700,max:9999,bps:0},
+    {min:680,max:699,bps:25},
+    {min:650,max:679,bps:75},
+    {min:620,max:649,bps:150},
+    {min:0,max:619,bps:250}
+  ],
+  downPayment: [
+    {min:30,max:100,bps:0},
+    {min:20,max:29,bps:25},
+    {min:10,max:19,bps:75},
+    {min:0,max:9,bps:150}
+  ],
+  ltv: [
+    {min:0,max:60,bps:0},
+    {min:61,max:75,bps:50},
+    {min:76,max:85,bps:100},
+    {min:86,max:100,bps:200}
+  ],
+  seasoning: [
+    {min:24,max:9999,bps:0},
+    {min:12,max:23,bps:25},
+    {min:6,max:11,bps:50},
+    {min:0,max:5,bps:75}
+  ],
+  market: {1:0,2:25,3:75,4:125},
+  termMonths: [
+    {min:0,max:60,bps:50},
+    {min:61,max:120,bps:0},
+    {min:121,max:240,bps:-25},
+    {min:241,max:9999,bps:-50}
+  ]
+};
+
+function lookupBps(value,bands){
+  for(const band of bands){
+    if(value>=band.min && value<=band.max) return band.bps;
+  }
+  return 0;
+}
+
+function calculate(){
+  // User-configurable base rate and min discount
+  const baseYieldPct = parseFloat(document.getElementById('baseYieldInput').value) || 8.00;
+  const baseYield = baseYieldPct / 100;
+  const minDiscount = parseFloat(document.getElementById('minDiscountInput').value) || 20000;
+
+  const fico = parseFloat(document.getElementById('fico').value)||0;
+  const downPayment = parseFloat(document.getElementById('downPayment').value)||0;
+  const ltv = parseFloat(document.getElementById('ltv').value)||0;
+  const seasoning = parseFloat(document.getElementById('seasoning').value)||0;
+  const lates = document.getElementById('lates').value;
+  const market = parseInt(document.getElementById('market').value)||1;
+  const termMonths = parseFloat(document.getElementById('termMonths').value)||0;
+  const upb = parseFloat(document.getElementById('upb').value)||0;
+  const offer = parseFloat(document.getElementById('offer').value)||0;
+
+  const ficoBps = lookupBps(fico,riskBands.fico);
+  const dpBps = lookupBps(downPayment,riskBands.downPayment);
+  const ltvBps = lookupBps(ltv,riskBands.ltv);
+  const seasoningBps = (lates==='Y') ? 125 : lookupBps(seasoning,riskBands.seasoning);
+  const marketBps = riskBands.market[market]||0;
+  const termBps = lookupBps(termMonths,riskBands.termMonths);
+
+  document.getElementById('ficoDisplay').textContent = fico;
+  document.getElementById('ficoBps').textContent = ficoBps;
+  document.getElementById('dpDisplay').textContent = downPayment.toFixed(1);
+  document.getElementById('dpBps').textContent = dpBps;
+  document.getElementById('ltvDisplay').textContent = ltv.toFixed(1);
+  document.getElementById('ltvBps').textContent = ltvBps;
+  document.getElementById('seasoningDisplay').textContent =
+    seasoning + ' months' + (lates==='Y' ? ' (WITH LATE)' : '');
+  document.getElementById('seasoningBps').textContent = seasoningBps;
+  document.getElementById('marketDisplay').textContent = market;
+  document.getElementById('marketBps').textContent = marketBps;
+  document.getElementById('termDisplay').textContent = termMonths + ' months';
+  document.getElementById('termBps').textContent = termBps;
+
+  const totalBps = ficoBps + dpBps + ltvBps + seasoningBps + marketBps + termBps;
+  const totalBpsPercent = totalBps/10000;
+
+  const discountFromOffer = upb - offer;
+
+  // Override: FICO ≥ 680, term > 120, discount > 80k
+  const cond1 = fico >= 680;
+  const cond2 = termMonths > 120;
+  const cond3 = discountFromOffer > 80000;
+  const overrideApplies = cond1 && cond2 && cond3;
+
+  const overrideDiv = document.getElementById('overrideStatus');
+  if(overrideApplies){
+    overrideDiv.innerHTML = `
+      <div class="override-alert">
+        ✓ OVERRIDE APPLIES<br>
+        FICO ≥ 680, Remaining Term &gt; 120 months, and Discount &gt; $80,000.<br>
+        <strong>Required Yield: ${baseYieldPct.toFixed(2)}% (Base Only)</strong>
+      </div>
+    `;
+  } else {
+    let reasons = [];
+    if(!cond1) reasons.push(`FICO ${fico} &lt; 680`);
+    if(!cond2) reasons.push(`Remaining Term ${termMonths} ≤ 120 months`);
+    if(!cond3) reasons.push(`Discount $${discountFromOffer.toLocaleString('en-US',{maximumFractionDigits:0})} ≤ $80,000`);
+    overrideDiv.innerHTML = `
+      <div class="normal-alert">
+        Override Does Not Apply<br>
+        <small>${reasons.join(' | ')}</small>
+      </div>
+    `;
+  }
+
+  document.getElementById('totalBps').textContent = totalBps;
+  document.getElementById('totalBpsPercent').textContent = (totalBpsPercent*100).toFixed(2);
+  document.getElementById('overrideActive').textContent = overrideApplies ? 'YES' : 'NO';
+  const appliedBps = overrideApplies ? 0 : totalBps;
+  const appliedPct = overrideApplies ? 0 : totalBpsPercent;
+  document.getElementById('finalAdjBps').textContent = appliedBps;
+  document.getElementById('finalAdjPercent').textContent = (appliedPct*100).toFixed(2);
+
+  const requiredYield = overrideApplies ? baseYield : (baseYield + appliedPct);
+  document.getElementById('requiredYield').textContent = (requiredYield*100).toFixed(2);
+
+  const discount = discountFromOffer;
+  document.getElementById('discountAmount').textContent =
+    discount.toLocaleString('en-US',{maximumFractionDigits:0});
+
+  const meetsMin = discount >= minDiscount;
+  const meetsMinEl = document.getElementById('meetsMin');
+  meetsMinEl.textContent = meetsMin ? 'YES' : 'NO';
+  meetsMinEl.style.color = meetsMin ? '#28a745' : '#dc3545';
+
+  document.getElementById('finalPrice').textContent =
+    offer.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('finalDiscount').textContent =
+    discount.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('finalYield').textContent =
+    (requiredYield*100).toFixed(2);
+}
+
+['baseYieldInput','minDiscountInput','fico','downPayment','ltv','seasoning',
+ 'termMonths','upb','offer']
+  .forEach(id => document.getElementById(id).addEventListener('input',calculate));
+['lates','market'].forEach(id =>
+  document.getElementById(id).addEventListener('change',calculate)
+);
+calculate();
+</script>
+</body>
+</html>
