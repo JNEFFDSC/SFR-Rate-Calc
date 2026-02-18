@@ -84,6 +84,16 @@ body {
 .final-offer h3 { font-size:16px; margin-bottom:15px; opacity:0.95; font-weight:500; }
 .final-offer-value { font-size:32px; font-weight:700; margin-bottom:5px; }
 
+.export-btn {
+  display:block; margin:30px auto 0; padding:14px 32px;
+  background:linear-gradient(135deg,#28a745 0%,#218838 100%);
+  color:white; border:none; border-radius:8px; font-size:15px;
+  font-weight:600; cursor:pointer; transition:all 0.2s;
+  box-shadow:0 4px 12px rgba(40,167,69,0.3);
+}
+.export-btn:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(40,167,69,0.4); }
+.export-btn:active { transform:translateY(0); }
+
 .base-rate-display {
   background:#f9f9f9; padding:12px; border-radius:6px; margin-bottom:20px;
   display:grid; grid-template-columns:1fr 1fr; gap:30px;
@@ -277,6 +287,8 @@ body {
         Required Yield: <span id="finalYield">11.50</span>%
       </p>
     </div>
+
+    <button class="export-btn" onclick="exportCSV()">⬇ Export to CSV</button>
   </div>
 </div>
 
@@ -428,6 +440,76 @@ function calculate(){
   document.getElementById(id).addEventListener('change',calculate)
 );
 calculate();
+
+function exportCSV(){
+  const v = id => document.getElementById(id);
+  const txt = id => v(id).textContent;
+  const val = id => v(id).value;
+
+  const rows = [
+    ['Mortgage Note Pricing Matrix - Deed Street Capital'],
+    ['Export Date', new Date().toLocaleString()],
+    [],
+    ['=== BASE SETTINGS ==='],
+    ['Base Required Yield (%)', val('baseYieldInput')],
+    ['Minimum Discount to UPB ($)', val('minDiscountInput')],
+    [],
+    ['=== DEAL INPUTS ==='],
+    ['Payor FICO Score', val('fico')],
+    ['Down Payment (%)', val('downPayment')],
+    ['Current LTV (%)', val('ltv')],
+    ['Seasoning (Months)', val('seasoning')],
+    ['Any 30+ Day Lates (Last 12 Mo)', val('lates') === 'Y' ? 'Yes' : 'No'],
+    ['Property Market Tier', v('market').options[v('market').selectedIndex].text],
+    ['Remaining Term (Months)', val('termMonths')],
+    ['Unpaid Balance (UPB)', val('upb')],
+    ['Your Offer Price', val('offer')],
+    [],
+    ['=== RISK FACTOR ADJUSTMENTS ==='],
+    ['Risk Factor', 'Input Value', 'BPS Adjustment'],
+    ['FICO Score', txt('ficoDisplay'), txt('ficoBps')],
+    ['Down Payment %', txt('dpDisplay') + '%', txt('dpBps')],
+    ['Current LTV %', txt('ltvDisplay') + '%', txt('ltvBps')],
+    ['Seasoning', txt('seasoningDisplay'), txt('seasoningBps')],
+    ['Market Tier', txt('marketDisplay'), txt('marketBps')],
+    ['Remaining Term', txt('termDisplay'), txt('termBps')],
+    [],
+    ['=== YIELD CALCULATION ==='],
+    ['Total BPS Adjustment', txt('totalBps')],
+    ['Total Adjustment (%)', txt('totalBpsPercent') + '%'],
+    ['Override Active', txt('overrideActive')],
+    ['Final Adjustment Applied (BPS)', txt('finalAdjBps')],
+    ['Final Adjustment Applied (%)', txt('finalAdjPercent') + '%'],
+    [],
+    ['=== FINAL SUMMARY ==='],
+    ['Total Required Yield (%)', txt('requiredYield') + '%'],
+    ['Discount vs UPB ($)', txt('discountAmount')],
+    ['Meets Minimum Discount', txt('meetsMin')],
+    [],
+    ['=== FINAL OFFER ==='],
+    ['Final Offer Price ($)', txt('finalPrice')],
+    ['Discount ($)', txt('finalDiscount')],
+    ['Required Yield (%)', txt('finalYield') + '%']
+  ];
+
+  const csvContent = rows.map(r =>
+    r.map(cell => {
+      const s = String(cell == null ? '' : cell);
+      return s.includes(',') || s.includes('"') || s.includes('\n')
+        ? '"' + s.replace(/"/g,'""') + '"' : s;
+    }).join(',')
+  ).join('\n');
+
+  const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Mortgage_Note_Pricing_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 </script>
 </body>
 </html>
